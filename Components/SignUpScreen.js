@@ -3,7 +3,7 @@ import { View, TextInput, TouchableOpacity, Text, Alert, StyleSheet, Image, Scro
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth, db } from '../firebaseConfig'; // Updated import
 import { doc,setDoc } from 'firebase/firestore';
-import ambulance from './Images/ambulance.png'; // Add image import like in the SignIn screen
+import ambulance from './Images/driver.png'; // Add image import like in the SignIn screen
 
 const SignUpScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
@@ -49,7 +49,7 @@ const SignUpScreen = ({ navigation }) => {
         value={email}
         onChangeText={setEmail}
         placeholder="Email"
-        placeholderTextColor="#B0B0B0"
+        placeholderTextColor="#45b2dc"
         keyboardType="email-address"
         autoCapitalize="none"
       />
@@ -58,7 +58,7 @@ const SignUpScreen = ({ navigation }) => {
         value={password}
         onChangeText={setPassword}
         placeholder="Password"
-        placeholderTextColor="#B0B0B0"
+        placeholderTextColor="#45b2dc"
         secureTextEntry
         autoCapitalize="none"
       />
@@ -67,21 +67,21 @@ const SignUpScreen = ({ navigation }) => {
         value={driverName}
         onChangeText={setDriverName}
         placeholder="Driver Name"
-        placeholderTextColor="#B0B0B0"
+        placeholderTextColor="#45b2dc"
       />
       <TextInput
         style={styles.textInput}
         value={make}
         onChangeText={setMake}
         placeholder="Vehicle Make"
-        placeholderTextColor="#B0B0B0"
+        placeholderTextColor="#45b2dc"
       />
       <TextInput
         style={styles.textInput}
         value={numberPlate}
         onChangeText={setNumberPlate}
         placeholder="Number Plate"
-        placeholderTextColor="#B0B0B0"
+        placeholderTextColor="#45b2dc"
       />
       <TouchableOpacity style={styles.signInButton} onPress={handleSignUp}>
         <Text style={styles.signInButtonText}>Sign Up</Text>
@@ -94,12 +94,28 @@ const SignUpScreen = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#1F1E30', padding: 20 },
-  headerImage: { width: '100%', height: 200, resizeMode: 'contain', marginTop: 20 },
-  welcomeText: { color: '#FFFFFF', fontSize: 26, fontWeight: 'bold', marginVertical: 20, textAlign: 'center' },
-  textInput: { backgroundColor: '#F0F0F0', borderRadius: 10, padding: 15, width: '100%', marginBottom: 20, color: '#1F1E30' },
-  signInButton: { backgroundColor: '#FFFFFF', paddingVertical: 12, width: '60%', borderRadius: 10, alignItems: 'center', marginBottom: 20 },
-  signInButtonText: { color: '#1F1E30', fontWeight: 'bold', fontSize: 14 },
+  container: { flex: 1, backgroundColor: '#45b2dc', padding: 20 },
+  headerImage: { width: '100%', height: 180, resizeMode: 'contain', marginTop: 20 },
+  welcomeText: { color: '#FFFFFF', fontSize: 26, fontWeight: 'bold', marginVertical: 20, textAlign: 'center',fontFamily: "sans-serif-condensed",},
+  textInput: { backgroundColor: '#F0F0F0', borderRadius: 10, padding: 15, width: '100%', marginBottom: 20, color: '#1F1E30',shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.22,
+    shadowRadius: 2.22,
+
+    elevation: 3, },
+  signInButton: { backgroundColor: '#1e446b', paddingVertical: 12, width: '60%', borderRadius: 10, alignItems: 'center', marginBottom: 20,shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.22,
+    shadowRadius: 2.22,
+
+    elevation: 3, },
+  signInButtonText: { color: '#FFFFFF', fontWeight: 'bold', fontSize: 14, },
   forgotPasswordText: { color: '#FFFFFF', fontSize: 13, marginBottom: 30 },
 });
 

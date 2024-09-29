@@ -3,7 +3,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from './firebaseConfig'; // Import Firebase auth
-
+import LoaderModal from './Components/LoaderModal';
 // Import screens
 import AssignedRideScreen from './Components/AssignedRideScreen';
 import RideHistoryScreen from './Components/RideHistoryScreen';
@@ -11,6 +11,7 @@ import SignInScreen from './Components/SignInScreen';
 import SignUpScreen from './Components/SignUpScreen';
 import { Text } from 'react-native';
 import HomePage from './Components/Home';
+import Toast from 'react-native-toast-message'; // Import the toast component
 
 // Create Stack Navigator
 const Stack = createNativeStackNavigator();
@@ -32,12 +33,12 @@ const App = () => {
   }, []);
 
   if (loading) {
-    return <Text>Loading...</Text>; // Optional: You can render a loading spinner here
+    return <LoaderModal />; // Optional: You can render a loading spinner here
   }
 
   return (
     <NavigationContainer >
-    {/* <NavigationContainer initialState={"AssignedRideScreen"}> */}
+      {/* <NavigationContainer initialState={"AssignedRideScreen"}> */}
       <Stack.Navigator
         initialRouteName={user ? "Home" : "SignInScreen"} // Automatically route based on auth status
         screenOptions={{
@@ -77,6 +78,7 @@ const App = () => {
         </>
 
       </Stack.Navigator>
+      <Toast />
     </NavigationContainer>
   );
 };

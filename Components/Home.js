@@ -1,12 +1,15 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, Image, TouchableOpacity, StyleSheet, Alert } from 'react-native';
-import { doc, onSnapshot, updateDoc } from 'firebase/firestore'; // For updating driver location
-import { db, auth } from '../firebaseConfig'; // Import Firebase config
-import ambulanceImg from './Images/ambulance.png'; // Ambulance image
-import Geolocation from '@react-native-community/geolocation'; // Geolocation package
+import { View, Text, Image, TouchableOpacity, StyleSheet, Alert, SectionListComponent } from 'react-native';
+import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
+import { db, auth } from '../firebaseConfig';
+import ambulanceImg from './Images/ambulance.png';
+import Geolocation from '@react-native-community/geolocation';
 import { useFocusEffect } from '@react-navigation/native';
-import out from './Images/out.png'; // Sign out image
-import { getAuth, signOut } from 'firebase/auth'; // For user authentication
+import out from './Images/out.png';
+import { getAuth, signOut } from 'firebase/auth';
+import LottieView from 'lottie-react-native';
+import LoaderModal from './LoaderModal';
+import Toast from 'react-native-toast-message';
 
 const HomePage = ({ navigation }) => {
   const [driverData, setDriverData] = useState(null);
@@ -14,20 +17,39 @@ const HomePage = ({ navigation }) => {
   const [showBanner, setShowBanner] = useState(false); // Show banner when status becomes 'busy'
   const [lat, setLat] = useState(null);
   const [long, setLong] = useState(null);
+  const [loading, setLoading] = useState(false);
 
+  const showToast = () => {
+    Toast.show({
+      type: 'info',
+      text1: 'Ride Assigned !!!',
+      // text2: 'Tap to update the app version',
+      visibilityTime: 1500,
+      position: 'top',
+      topOffset: 10, // Adjust for bottom position
+      autoHide: true,
+      backgroundColor: "black",
+    });
+  };
   // Function to update the driver's location in Firestore
   const updateDriverLocation = async (latitude, longitude) => {
-    try {
-      console.log("Latest location: " + latitude + ", " + longitude);
-      const driverDocRef = doc(db, 'ambulances', auth.currentUser.uid); // Reference to driver's Firestore document
-      await updateDoc(driverDocRef, {
-        'driverLocation.latitude': latitude,
-        'driverLocation.longitude': longitude,
-      });
-      console.log('Driver location updated in Firestore');
-    } catch (error) {
-      console.log('Error updating driver location:', error);
-      Alert.alert('Error', 'Failed to update driver location.');
+    if (latitude != null && longitude != null) {
+
+      try {
+        console.log("Latest location: " + latitude + ", " + longitude);
+        const driverDocRef = doc(db, 'ambulances', auth.currentUser.uid);
+        await updateDoc(driverDocRef, {
+          'driverLocation.latitude': latitude,
+          'driverLocation.longitude': longitude,
+        });
+        console.log('Driver location updated in Firestore');
+      } catch (error) {
+        console.log('Error updating driver location:', error);
+        Alert.alert('Error', 'Failed to update driver location.');
+      }
+    }
+    else {
+      console.log('Error Updating driver location');
     }
   };
 
@@ -37,16 +59,10 @@ const HomePage = ({ navigation }) => {
       (info) => {
         const latitude = info.coords.latitude;
         const longitude = info.coords.longitude;
+        console.log("Info " + latitude, longitude);
         setLat(latitude);
         setLong(longitude);
-        // Update Firestore with new location
-        updateDriverLocation(latitude, longitude);
       },
-      (error) => {
-        console.log(error);
-        Alert.alert('Error', 'Failed to get current location.');
-      },
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
     );
   };
 
@@ -54,25 +70,30 @@ const HomePage = ({ navigation }) => {
   useFocusEffect(
     useCallback(() => {
       getCoordinatesAndUpdate(); // Fetch coordinates when screen is focused
-
+      setLoading(true);
       // Get driver's ambulance document based on the current user's UID
       const driverDocRef = doc(db, 'ambulances', auth.currentUser.uid);
 
-      // Subscribe to real-time updates of driver status
       const unsubscribe = onSnapshot(driverDocRef, (docSnapshot) => {
         if (docSnapshot.exists()) {
           const data = docSnapshot.data();
           setDriverData(data);
           setStatus(data.status);
           if (data.status === 'busy') {
-            setShowBanner(true); // Show banner when the status is 'busy'
+            showToast();
+            setTimeout(async () => {
+              setShowBanner(true); // Show banner when the status is 'busy'
+            }, 1500);
           } else {
             setShowBanner(false);
           }
+          updateDriverLocation(lat, long);
         } else {
           Alert.alert('Error', 'Driver data not found');
         }
       });
+
+      setLoading(false);
 
       // Cleanup the subscription
       return () => unsubscribe();
@@ -84,69 +105,79 @@ const HomePage = ({ navigation }) => {
     navigation.navigate('AssignedRideScreen'); // Navigate to assigned ride page
   };
 
-  if (!driverData) {
-    return (
-      <View style={styles.loadingContainer}>
-        <Text style={styles.loadingText}>Loading driver details...</Text>
-      </View>
-    );
-  }
-
   return (
-    <View style={styles.container}>
-      {/* Ambulance Image Tile */}
-      <View style={{ ...styles.tile, flex: 1, backgroundColor: "transparent" }}>
-        <Image source={ambulanceImg} style={styles.ambulanceImage} />
-        <Text style={{ ...styles.tileTitle, color: "white" }}>Ambulance Details</Text>
-        <Text style={{ ...styles.tileContent, color: "white" }}>{driverData.make}</Text>
-        <Text style={{ ...styles.tileContent, color: "white" }}>License: {driverData.numberPlate}</Text>
-      </View>
+    <>
+      {(!loading) && (!driverData) ?
+        <LoaderModal />
+        :
+        <View style={styles.container}>
+          {/* Ambulance Image Tile */}
+          <View style={{ ...styles.tile, flex: 1, backgroundColor: "transparent", elevation: 0 }}>
+            {/* <Image source={ambulanceImg} style={styles.ambulanceImage} /> */}
 
-      <TouchableOpacity
-        style={styles.signOutButton}
-        onPress={() => {
-          signOut(auth)
-            .then(() => {
-              console.log('User signed out successfully!');
-              navigation.navigate('SignInScreen');
-            })
-            .catch((error) => {
-              console.error('Sign-out error: ', error);
-            });
-        }}
-      >
-        <Image style={styles.signOutButtonText} source={out} />
-      </TouchableOpacity>
+            <LottieView
+              style={styles.ambulanceImage}
+              source={require('./Images/car.json')}
+              autoPlay
+              loop={true}
+            />
+            <Text style={{ ...styles.tileTitle, color: "#0083fe" }}>Ambulance Details</Text>
+            <Text style={{ ...styles.tileContent, color: "grey" }}>Ambulance Make :{driverData.make}</Text>
+            <Text style={{ ...styles.tileContent, color: "grey" }}>Ambulance License : {driverData.numberPlate}</Text>
+          </View>
 
-      {/* Driver Name Tile */}
-      <View style={styles.tile}>
-        <Text style={styles.tileTitle}>Driver Name</Text>
-        <Text style={styles.tileContent}>{driverData.driverName}</Text>
-      </View>
-
-      {/* Driver Location Tile */}
-      <View style={styles.tile}>
-        <Text style={styles.tileTitle}>Location</Text>
-        <Text style={styles.tileContent}>Lat: {driverData.driverLocation.latitude}</Text>
-        <Text style={styles.tileContent}>Lon: {driverData.driverLocation.longitude}</Text>
-      </View>
-
-      {/* Driver Status Tile */}
-      <View style={styles.tile}>
-        <Text style={styles.tileTitle}>Status</Text>
-        <Text style={styles.tileContent}>{status}</Text>
-      </View>
-
-      {/* Banner for Ride Assignment */}
-      {showBanner && (
-        <View style={styles.banner}>
-          <Text style={styles.bannerText}>Ride Assigned</Text>
-          <TouchableOpacity style={styles.startButton} onPress={handleStartRide}>
-            <Text style={styles.startButtonText}>Start</Text>
+          <TouchableOpacity
+            style={styles.signOutButton}
+            onPress={() => {
+              signOut(auth)
+                .then(() => {
+                  console.log('User signed out successfully!');
+                  navigation.navigate('SignInScreen');
+                })
+                .catch((error) => {
+                  console.error('Sign-out error: ', error);
+                });
+            }}
+          >
+            <Image style={styles.signOutButtonText} source={out} />
           </TouchableOpacity>
+
+          <View style={{ flexDirection: "row", gap: 10, }}>
+
+            {/* Driver Name Tile */}
+            <View style={{ ...styles.tile, width: "50%" }}>
+              <Text style={styles.tileTitle}>Driver Name</Text>
+              <Text style={styles.tileContent}>{driverData.driverName}</Text>
+            </View>
+
+            {/* Driver Status Tile */}
+            <View style={{ ...styles.tile, width: "35%" }}>
+              <Text style={styles.tileTitle}>Status</Text>
+              <Text style={styles.tileContent}>{status}</Text>
+            </View>
+
+          </ View>
+
+          {/* Driver Location Tile */}
+          <View style={styles.tile}>
+            <Text style={styles.tileTitle}>Location</Text>
+            <Text style={styles.tileContent}>Your Latitude : {lat}</Text>
+            <Text style={styles.tileContent}>Your Longitude : {long}</Text>
+          </View>
+
+
+          {/* Banner for Ride Assignment */}
+          {showBanner && (
+            <View style={styles.banner}>
+              <Text style={styles.bannerText}>Ride Assigned</Text>
+              <TouchableOpacity style={styles.startButton} onPress={handleStartRide}>
+                <Text style={styles.startButtonText}>Start</Text>
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
-      )}
-    </View>
+      }
+    </>
   );
 };
 
@@ -154,22 +185,37 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 10,
-    backgroundColor: '#1F1E30',
+    backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
+    paddingVertical: 10,
+    paddingBottom: 30,
   },
   tile: {
     width: '90%',
-    backgroundColor: '#FFFFFF',
+    height: 150,
+    backgroundColor: '#d7eef9',
     borderRadius: 10,
     padding: 20,
     marginVertical: 10,
     alignItems: 'center',
+    justifyContent: "center",
+    alignItems: 'center',
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.22,
+    shadowRadius: 2.22,
+
+    elevation: 3,
   },
   tileTitle: {
-    fontSize: 18,
+    fontSize: 22,
     fontWeight: 'bold',
-    color: '#1F1E30',
+    fontFamily: "sans-serif-condensed",
+    color: '#379cc3',
     marginBottom: 10,
   },
   tileContent: {
@@ -178,33 +224,58 @@ const styles = StyleSheet.create({
   },
   ambulanceImage: {
     width: '100%',
-    height: 150,
+    // height: 140,
     flex: 1,
     resizeMode: 'contain',
   },
   banner: {
     position: 'absolute',
-    bottom: 30,
-    backgroundColor: '#FFFFFF',
-    width: '100%',
-    padding: 20,
+    flexDirection: "row",
+    bottom: "5%",
+    backgroundColor: '#0083fe',
+    width: '95%',
+    // height:300,
+    justifyContent: "space-between",
+    alignContent: "center",
+    padding: 12,
     alignItems: 'center',
-    borderRadius: 10,
+    borderRadius: 15,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.22,
+    shadowRadius: 2.22,
+
+    elevation: 3,
   },
   bannerText: {
-    fontSize: 18,
+    fontSize: 13,
     fontWeight: 'bold',
-    color: '#1F1E30',
-    marginBottom: 10,
+    color: '#FFFFFF',
   },
   startButton: {
-    backgroundColor: '#1F1E30',
-    padding: 15,
+    backgroundColor: '#d7eef9',
+    padding: 8,
+    width: 110,
+    justifyContent: 'center',
+    alignItems: 'center',
     borderRadius: 10,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.22,
+    shadowRadius: 2.22,
+
+    elevation: 3,
   },
   startButtonText: {
     color: '#FFFFFF',
-    fontSize: 16,
+    color: "#0083fe",
+    fontSize: 12,
     fontWeight: 'bold',
   },
   loadingContainer: {
@@ -227,13 +298,14 @@ const styles = StyleSheet.create({
     top: 20,
     right: 20,
     zIndex: 1,
-    borderWidth:2,
-    borderRadius:50,
+    borderWidth: 2,
+    borderRadius: 50,
     borderColor: "#FF0000",
+    backgroundColor: "#FF0000",
   },
   signOutButtonText: {
-    width:25,
-    height:25,
+    width: 25,
+    height: 25,
   },
 });
 

@@ -43,9 +43,9 @@ const SignInScreen = ({ navigation }) => {
       <TouchableOpacity style={styles.signInButton} onPress={handleSignIn}>
         <Text style={styles.signInButtonText}>Sign In</Text>
       </TouchableOpacity>
-      <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
+      {/* <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
         <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
-      </TouchableOpacity>
+      </TouchableOpacity> */}
       <View style={styles.signUpContainer}>
         <Text style={styles.signUpText}>Don't have an account?</Text>
         <TouchableOpacity onPress={() => navigation.navigate('SignUpScreen')}>
@@ -57,16 +57,25 @@ const SignInScreen = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#1F1E30', padding: 20 },
-  headerImage: { width: '100%', height: 200, resizeMode: 'contain', marginTop: 20 },
-  welcomeText: { color: '#FFFFFF', fontSize: 26, fontWeight: 'bold', marginVertical: 20, textAlign: 'center' },
+  container: { flex: 1, backgroundColor: '#45b2dc', padding: 20 },
+  headerImage: { width: '100%', height: 250, resizeMode: 'contain', marginTop: 20 },
+  welcomeText: { color: '#FFFFFF', fontSize: 26, fontWeight: 'bold', marginVertical: 20, textAlign: 'center', fontFamily: "sans-serif-condensed" },
   textInput: { backgroundColor: '#F0F0F0', borderRadius: 10, padding: 15, width: '100%', marginBottom: 20, color: '#1F1E30' },
-  signInButton: { backgroundColor: '#FFFFFF', paddingVertical: 12, width: '60%', borderRadius: 10, alignItems: 'center', marginBottom: 20 },
-  signInButtonText: { color: '#1F1E30', fontWeight: 'bold', fontSize: 14 },
+  signInButton: { backgroundColor: '#1e446b', paddingVertical: 12, width: '60%', borderRadius: 10, alignItems: 'center', marginBottom: 20,shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.22,
+    shadowRadius: 2.22,
+
+    elevation: 3, },
+  signInButtonText: {
+    color: '#FFFFFF', fontWeight: 'bold', fontSize: 14,  },
   forgotPasswordText: { color: '#FFFFFF', fontSize: 13, marginBottom: 30 },
   signUpContainer: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center' },
   signUpText: { color: '#FFFFFF', fontSize: 14 },
-  signUpLink: { color: '#81b0ff', fontSize: 14, marginLeft: 5 },
+  signUpLink: { color: '#c4e9fe', fontSize: 14, marginLeft: 5, fontFamily: "sans-serif-black" },
 });
 
 export default SignInScreen;
